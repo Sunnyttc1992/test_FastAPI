@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Digit Classifier</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 2rem; }
+    .row { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+    #preview { max-height: 160px; border: 1px dashed #ccc; padding: .5rem; border-radius: .5rem; }
+    #predictionResult { font-weight: 600; margin-top: 1rem; }
+    #error { color: #b00020; margin-top: .5rem; }
+  </style>
+</head>
+<body>
+  <h1>Digit Classifier</h1>
+  <div class="row">
+    <input type="file" id="imageInput" accept="image/*" />
+    <button id="classifyBtn" onclick="uploadImage()">Classify</button>
+  </div>
+  <div class="row" style="margin-top: 1rem;">
+    <img id="preview" alt="Preview will appear here" />
+  </div>
+  <p id="predictionResult"></p>
+  <p id="error" role="alert"></p>
+
+  <script>
+    const imageInput = document.getElementById('imageInput');
+    const preview = document.getElementById('preview');
+    const resultEl = document.getElementById('predictionResult');
+    const errorEl = document.getElementById('error');
+    const btn = document.getElementById('classifyBtn');
+
+    imageInput.addEventListener('change', () => {
+      errorEl.textContent = '';
+      resultEl.textContent = '';
+      const file = imageInput.files?.[0];
+      if (!file) { preview.src = ''; return; }
+      const url = URL.createObjectURL(file);
+      preview.src = url;
+    });
+
+    async function uploadImage() {
+      errorEl.textContent = '';
+      resultEl.textContent = '';
+
+      const file = imageInput.files?.[0];
+      if (!file) {
+        errorEl.textContent = 'Please select an image file first.';
+        return;
+      }
+
+      const formData = new FormData();
+      // NOTE: backend must read field name "image"
+      formData.append('image', file, file.name);
+
+      try {
+        btn.disabled = true;
+        btn.textContent = 'Classifying…';
+
+        // Prefer relative path so it works behind reverse proxies
+        const response = await fetch('/predict', {
+          method: 'POST',
+          body: formData,
+        });
+
+        // Surface non-2xx with details
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(`HTTP ${response.status}: ${text.substring(0, 200)}`);
+        }
+
+        const result = await response.json();
+        if (typeof result?.prediction === 'undefined') {
+          throw new Error('Malformed JSON: missing "prediction" field');
+        }
+
+        resultEl.textContent = `Predicted Digit: ${result.prediction}`;
+      } catch (err) {
+        console.error(err);
+        errorEl.textContent = `Request failed: ${err.message}`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Classify';
+      }
+    }
+
+    // Optional: support Enter to trigger classify when a file is focused
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') uploadImage();
+    });
+  </script>
+</body>
+</html>
+
+
