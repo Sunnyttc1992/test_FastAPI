@@ -2,6 +2,6 @@ fastapi
 numpy
 pandas
 scikit-learn
-uvicorn
-pickle
+uvicorn[standard]
 python-multipart
+pillow
