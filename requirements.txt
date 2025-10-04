@@ -1,1 +1,7 @@
 fastapi
+numpy
+pandas
+scikit-learn
+uvicorn
+pickle
+python-multipart
