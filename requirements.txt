@@ -5,3 +5,4 @@ scikit-learn
 uvicorn[standard]
 python-multipart
 pillow
+PIL
