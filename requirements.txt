@@ -5,4 +5,3 @@ scikit-learn==1.7.2
 uvicorn[standard]
 python-multipart
 pillow
-PIL
